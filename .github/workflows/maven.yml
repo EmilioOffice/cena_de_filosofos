@@ -1,47 +1,23 @@
-# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
 name: Java CI with Maven
 
-# Define cuándo se debe ejecutar este workflow
 on:
-  # Se ejecuta en cada push a la rama "main"
   push:
     branches: [ "main" ]
-  # También se ejecuta en cada pull request dirigido a la rama "main"
   pull_request:
     branches: [ "main" ]
 
-# Define los trabajos (jobs) que se ejecutarán
 jobs:
-  # Solo tenemos un trabajo, llamado "build"
   build:
-
-    # El tipo de máquina virtual en la que se ejecutará el trabajo
     runs-on: ubuntu-latest
-
-    # La secuencia de pasos que componen el trabajo
     steps:
-    # 1. Descarga el código de tu repositorio a la máquina virtual
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    # 2. Configura el JDK (Java Development Kit)
+    - uses: actions/checkout@v4
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        # Especifica la versión de Java
         java-version: '21'
-        # Especifica la distribución de Java (Temurin es una opción excelente y estándar)
         distribution: 'temurin'
-        # Activa la caché de dependencias de Maven para acelerar futuras ejecuciones
         cache: maven
-
-    # 3. Compila y empaqueta el proyecto con Maven
-    # El comando 'mvn package' compila el código y lo empaqueta en un JAR.
-    # El flag -B (batch mode) es para que no pida interacciones del usuario.
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-    # 4. (Opcional pero recomendado) Sube el grafo de dependencias a GitHub
-    # Esto ayuda a Dependabot a encontrar vulnerabilidades de seguridad.
+      run: mvn -B package
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@v4
