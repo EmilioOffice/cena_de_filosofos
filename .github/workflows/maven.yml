@@ -7,14 +7,12 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-notify:
+  build:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -24,70 +22,4 @@ jobs:
         cache: maven
 
     - name: Build with Maven
-      run: mvn -B package > build-log.txt 2>&1 || true
-
-    - name: Check for build errors
-      id: check_build
-      run: |
-        if grep -q "BUILD FAILURE" build-log.txt; then
-          echo "result=failure" >> $GITHUB_OUTPUT
-        else
-          echo "result=success" >> $GITHUB_OUTPUT
-        fi
-        
-    - name: Get recipient emails
-      id: get_recipients
-      run: |
-        COMMITTER_EMAIL=$(git log -1 --pretty=format:'%ae')
-        
-        OWNER_EMAIL="${{ secrets.OWNER_EMAIL }}"
-        
-        RECIPIENT_LIST=$(echo -e "${COMMITTER_EMAIL}\n${OWNER_EMAIL}" | sort -u | paste -sd, -)
-        
-        echo "RECIPIENTS=${RECIPIENT_LIST}" >> $GITHUB_OUTPUT
-
-    # SUCCESS CASE
-    - name: Send success email
-      if: steps.check_build.outputs.result == 'success'
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.SMTP_USERNAME }}
-        password: ${{ secrets.SMTP_PASSWORD }}
-        subject: "✅ Éxito | Compilación de ${{ github.repository }}"
-        body: |
-          La compilación del proyecto ha finalizado exitosamente.
-          
-          Commit subido por: **${{ github.actor }}**
-          Puedes ver la ejecución completa aquí: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          
-          Se adjunta el log de compilación.
-        to: ${{ steps.get_recipients.outputs.RECIPIENTS }}
-        from: GitHub Actions CI
-        attachments: build-log.txt
-
-    # FAIL CASE
-    - name: Send failure email
-      if: steps.check_build.outputs.result == 'failure'
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.SMTP_USERNAME }}
-        password: ${{ secrets.SMTP_PASSWORD }}
-        subject: "❌ FALLO | Compilación de ${{ github.repository }}"
-        body: |
-          ¡Atención! La compilación del proyecto ha fallado.
-          
-          Commit subido por: **${{ github.actor }}**
-          Puedes ver la ejecución completa aquí: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          
-          Se adjunta el log con los errores.
-        to: ${{ steps.get_recipients.outputs.RECIPIENTS }}
-        from: GitHub Actions CI
-        attachments: build-log.txt
-        
-    - name: Fail the workflow
-      if: steps.check_build.outputs.result == 'failure'
-      run: exit 1
+      run: mvn -B package
