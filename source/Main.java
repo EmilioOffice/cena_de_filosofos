@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+// MAIN CLASS
 public class Main {
     public static void main(String[] args) {
         // Se crea la GUI en el Event Dispatch Thread (EDT)
